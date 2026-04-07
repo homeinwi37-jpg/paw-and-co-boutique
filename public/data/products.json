@@ -1,0 +1,124 @@
+{
+  "products": [
+    {
+      "id": "prod_001",
+      "name": "Premium Hundebett 'Royal Comfort'",
+      "description": "Luxuriöses orthopädisches Hundebett aus hochwertigem Memory-Schaum. Bezug aus samtweichem, hypoallergenem Stoff in elegantem Grau. Waschbar bei 30°C.",
+      "price": 149.99,
+      "originalPrice": 199.99,
+      "images": [
+        "https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=800",
+        "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800"
+      ],
+      "category": "Betten",
+      "specs": {
+        "Material": "Memory-Schaum, Samt",
+        "Größe": "80x60x20 cm",
+        "Gewicht": "3.5 kg",
+        "Pflegehinweis": "Bezug waschbar bei 30°C"
+      },
+      "isActive": true,
+      "createdAt": "2024-01-15T10:00:00Z",
+      "updatedAt": "2024-01-15T10:00:00Z"
+    },
+    {
+      "id": "prod_002",
+      "name": "Elegantes Leder-Halsband 'Milano'",
+      "description": "Handgefertigtes Hundehalsband aus italienischem Vollnarbenleder. Verstellbar mit goldener Schnalle. Erhältlich in verschiedenen Größen.",
+      "price": 79.99,
+      "originalPrice": 99.99,
+      "images": [
+        "https://images.unsplash.com/photo-1599839575338-31b11ae5c390?w=800"
+      ],
+      "category": "Halsbänder",
+      "specs": {
+        "Material": "Italienisches Leder",
+        "Breite": "2.5 cm",
+        "Länge": "35-45 cm (verstellbar)",
+        "Verschluss": "Goldene Metallschnalle"
+      },
+      "isActive": true,
+      "createdAt": "2024-01-16T10:00:00Z",
+      "updatedAt": "2024-01-16T10:00:00Z"
+    },
+    {
+      "id": "prod_003",
+      "name": "Bio-Leckerli Set 'Naturgenuss'",
+      "description": "Premium Bio-Hundesnacks aus 100% natürlichen Zutaten. Ohne Zusatzstoffe, Getreide und Zucker. Set enthält 3 verschiedene Sorten.",
+      "price": 34.99,
+      "images": [
+        "https://images.unsplash.com/photo-1568640347023-a616a30bc3bd?w=800"
+      ],
+      "category": "Snacks",
+      "specs": {
+        "Inhalt": "3x 100g Beutel",
+        "Sorten": "Huhn, Lachs, Rind",
+        "Zertifizierung": "Bio, Getreidefrei",
+        "Haltbarkeit": "12 Monate"
+      },
+      "isActive": true,
+      "createdAt": "2024-01-17T10:00:00Z",
+      "updatedAt": "2024-01-17T10:00:00Z"
+    },
+    {
+      "id": "prod_004",
+      "name": "Intelligentes Spielzeug 'Brain Trainer'",
+      "description": "Interaktives Futterspielzeug zur geistigen Beschäftigung. Verschiedene Schwierigkeitsstufen. Fördert die natürliche Neugier Ihres Hundes.",
+      "price": 44.99,
+      "originalPrice": 59.99,
+      "images": [
+        "https://images.unsplash.com/photo-1535294435445-d7249524ef2e?w=800"
+      ],
+      "category": "Spielzeug",
+      "specs": {
+        "Material": "BPA-freier Kunststoff",
+        "Größe": "15x15x8 cm",
+        "Schwierigkeitsstufen": "3",
+        "Spülmaschinenfest": "Ja"
+      },
+      "isActive": true,
+      "createdAt": "2024-01-18T10:00:00Z",
+      "updatedAt": "2024-01-18T10:00:00Z"
+    },
+    {
+      "id": "prod_005",
+      "name": "Regenmantel 'Urban Shield'",
+      "description": "Wasserdichter Hundemantel mit reflektierenden Streifen für sichere Nachtspaziergänge. Atmungsaktiv und leicht anzuziehen.",
+      "price": 64.99,
+      "images": [
+        "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=800"
+      ],
+      "category": "Bekleidung",
+      "specs": {
+        "Material": "Wasserdichtes Polyester",
+        "Größen": "S, M, L, XL",
+        "Farbe": "Schwarz mit Reflektoren",
+        "Verschluss": "Klettverschluss"
+      },
+      "isActive": true,
+      "createdAt": "2024-01-19T10:00:00Z",
+      "updatedAt": "2024-01-19T10:00:00Z"
+    },
+    {
+      "id": "prod_006",
+      "name": "Keramik-Napf Set 'Elegance'",
+      "description": "Hochwertiges 2er-Set Keramiknäpfe mit rutschfestem Silikonboden. Spülmaschinenfest und kratzfest. Zeitloses Design.",
+      "price": 54.99,
+      "originalPrice": 69.99,
+      "images": [
+        "https://images.unsplash.com/photo-1601758124510-52d02ddb7cbd?w=800"
+      ],
+      "category": "Näpfe",
+      "specs": {
+        "Material": "Hochwertige Keramik",
+        "Fassungsvermögen": "400ml + 800ml",
+        "Boden": "Rutschfestes Silikon",
+        "Spülmaschinenfest": "Ja"
+      },
+      "isActive": true,
+      "createdAt": "2024-01-20T10:00:00Z",
+      "updatedAt": "2024-01-20T10:00:00Z"
+    }
+  ],
+  "lastUpdated": "2024-01-20T10:00:00Z"
+}
