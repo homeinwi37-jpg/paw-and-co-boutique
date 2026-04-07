@@ -44,10 +44,10 @@ import {
   Eye, 
   EyeOff,
   Package,
+  PackageOpen,
   ExternalLink
 } from "lucide-react"
 import { type Product, updateProduct, deleteProduct } from "@/lib/products"
-import { Empty, EmptyIcon, EmptyTitle, EmptyDescription } from "@/components/ui/empty"
 
 interface ProductTableProps {
   products: Product[]
@@ -124,17 +124,17 @@ export function ProductTable({ products, onEdit, onRefresh }: ProductTableProps)
 
       {/* Table */}
       {filteredProducts.length === 0 ? (
-        <Empty>
-          <EmptyIcon>
-            <Package className="h-10 w-10" />
-          </EmptyIcon>
-          <EmptyTitle>Keine Produkte gefunden</EmptyTitle>
-          <EmptyDescription>
+        <div className="flex flex-col items-center justify-center py-12 px-4 border-2 border-dashed rounded-lg border-muted">
+          <div className="bg-muted/50 p-4 rounded-full mb-4">
+            <PackageOpen className="h-10 w-10 text-muted-foreground" />
+          </div>
+          <h3 className="text-lg font-medium">Keine Produkte gefunden</h3>
+          <p className="text-sm text-muted-foreground mt-1 max-w-xs text-center">
             {search || categoryFilter !== "all" || statusFilter !== "all"
               ? "Versuchen Sie, Ihre Filter anzupassen"
               : "Fugen Sie Ihr erstes Produkt hinzu"}
-          </EmptyDescription>
-        </Empty>
+          </p>
+        </div>
       ) : (
         <div className="rounded-lg border border-border overflow-hidden">
           <Table>
