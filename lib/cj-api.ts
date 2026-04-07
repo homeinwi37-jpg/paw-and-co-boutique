@@ -57,6 +57,7 @@ async function cjRequest<T>(endpoint: string, options: RequestInit = {}): Promis
 
   const response = await fetch(`${CJ_API_BASE}${endpoint}`, {
     ...options,
+    cache: 'no-store',
     headers: {
       'CJ-Access-Token': apiKey,
       'Content-Type': 'application/json',

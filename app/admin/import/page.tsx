@@ -24,6 +24,8 @@ import {
   getMockCJProducts, 
   extractCJProductId,
   convertCJToProduct,
+  getCJProductById,
+  searchCJProducts,
   type CJProduct 
 } from "@/lib/cj-api"
 import { addProduct, getProductsFromStorage } from "@/lib/products"
@@ -56,18 +58,22 @@ export default function AdminImportPage() {
     setMessage(null)
     
     try {
-      // Use mock data for demo
-      const mockProducts = await getMockCJProducts()
-      const filtered = mockProducts.filter(p => 
-        p.productNameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.productName.includes(searchQuery)
-      )
-      setSearchResults(filtered.length > 0 ? filtered : mockProducts)
-      
-      if (!hasApiKey) {
+      if (hasApiKey) {
+        // Use real API for search
+        const result = await searchCJProducts(searchQuery)
+        setSearchResults(result.products)
+      } else {
+        // Use mock data for demo
+        const mockProducts = await getMockCJProducts()
+        const filtered = mockProducts.filter(p => 
+          p.productNameEn.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.productName.includes(searchQuery)
+        )
+        setSearchResults(filtered.length > 0 ? filtered : mockProducts)
+        
         setMessage({ 
           type: 'error', 
-          text: 'Demo-Modus: Konfigurieren Sie Ihren CJ API-Key in den Einstellungen fur echte Produktsuche' 
+          text: 'Demo-Modus: Konfigurieren Sie Ihren CJ API-Key in den Einstellungen für echte Produktsuche' 
         })
       }
     } catch {
@@ -92,16 +98,39 @@ export default function AdminImportPage() {
         return
       }
 
-      // For demo, use mock product
-      const mockProducts = await getMockCJProducts()
-      const mockProduct = mockProducts[0]
-      mockProduct.pid = productId
+      let productData;
+
+      if (hasApiKey) {
+        // Try to fetch real product data if API key is present
+        const cjProduct = await getCJProductById(productId)
+        if (cjProduct) {
+          productData = convertCJToProduct(cjProduct)
+        } else {
+          setMessage({ type: 'error', text: 'Produkt konnte nicht von CJ abgerufen werden. Überprüfen Sie die ID/URL.' })
+          setIsLoading(false)
+          return
+        }
+      } else {
+        // For demo/mock mode, simulate dynamic data based on the ID
+        const mockProducts = await getMockCJProducts()
+        // Pick a mock product based on the last digit of the ID for variety
+        const mockIndex = parseInt(productId.slice(-1)) % mockProducts.length || 0
+        const mockProduct = { ...mockProducts[mockIndex] }
+        mockProduct.pid = productId
+        
+        // If it's the first mock product, customize the title slightly to show it's "imported"
+        if (mockIndex === 0 && productId !== '1001') {
+          mockProduct.productNameEn = `${mockProduct.productNameEn} (ID: ${productId})`
+        }
+        
+        productData = convertCJToProduct(mockProduct)
+      }
       
-      const productData = convertCJToProduct(mockProduct)
       addProduct(productData)
       
       setImportedIds(prev => new Set([...prev, productId]))
-      setMessage({ type: 'success', text: `Produkt "${mockProduct.productNameEn}" erfolgreich importiert!` })
+      const successTitle = productData.name
+      setMessage({ type: 'success', text: `Produkt "${successTitle}" erfolgreich importiert!` })
       setProductUrl("")
     } catch {
       setMessage({ type: 'error', text: 'Fehler beim Import. Bitte versuchen Sie es erneut.' })
