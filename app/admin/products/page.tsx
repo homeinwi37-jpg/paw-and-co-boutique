@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { AdminLayout } from "@/components/admin/admin-layout"
 import { ProductTable } from "@/components/admin/product-table"
@@ -14,7 +14,7 @@ import {
   type Product 
 } from "@/lib/products"
 
-export default function AdminProductsPage() {
+function AdminProductsContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [products, setProducts] = useState<Product[]>([])
@@ -131,5 +131,19 @@ export default function AdminProductsPage() {
         )}
       </div>
     </AdminLayout>
+  )
+}
+
+export default function AdminProductsPage() {
+  return (
+    <Suspense fallback={
+      <AdminLayout>
+        <div className="text-center py-12 text-muted-foreground">
+          Wird geladen...
+        </div>
+      </AdminLayout>
+    }>
+      <AdminProductsContent />
+    </Suspense>
   )
 }
