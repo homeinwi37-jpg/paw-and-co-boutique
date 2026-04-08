@@ -127,27 +127,33 @@ export async function getCJProductBySku(sku: string): Promise<CJProduct | null> 
   }
 }
 
-// Extract product ID from CJ URL
 export function extractCJProductId(url: string): string | null {
-  // URL formats:
-  // https://cjdropshipping.com/product/xxx-p-123456.html
-  // https://www.cjdropshipping.com/product-detail/123456
-  
+  // Clean URL
+  const cleanUrl = url.trim()
+  if (!cleanUrl) return null
+
+  // If it's just a numeric ID, return it
+  if (/^\d+$/.test(cleanUrl)) {
+    return cleanUrl
+  }
+
+  // Handle various CJ URL formats
   const patterns = [
-    /p-(\d+)\.html/,
-    /product-detail\/(\d+)/,
-    /pid=(\d+)/,
+    /p-(\d+)\.html/,                 // cjdropshipping.com/product/xxx-p-1234.html
+    /product-detail\/(\d+)/,         // cjdropshipping.com/product-detail/1234
+    /pid=(\d+)/,                      // query params ?pid=1234
+    /productId=(\d+)/,                // query params ?productId=1234
+    /([A-Z0-9-]{10,})/i               // Handle UUID style IDs if applicable (CJ uses numeric mostly but just in case)
   ]
 
   for (const pattern of patterns) {
-    const match = url.match(pattern)
-    if (match) return match[1]
+    const match = cleanUrl.match(pattern)
+    if (match && match[1]) return match[1]
   }
 
-  // If it's just a number, return it
-  if (/^\d+$/.test(url.trim())) {
-    return url.trim()
-  }
+  // Try to find any sequence of digits longer than 5 that might be the ID
+  const fallbackMatch = cleanUrl.match(/(\d{5,})/)
+  if (fallbackMatch) return fallbackMatch[1]
 
   return null
 }

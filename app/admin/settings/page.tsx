@@ -98,13 +98,18 @@ export default function AdminSettingsPage() {
     }
 
     setIsValidatingKey(true)
-    setCJApiKey(apiKey)
     
-    // Try to validate (will fail in demo but that's ok)
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    // Attempt real validation
+    const isValid = await validateCJApiKey(apiKey)
     
-    setHasApiKey(true)
-    setApiKeyMessage({ type: 'success', text: 'API-Key gespeichert! (Validierung in Demo-Modus ubersprungen)' })
+    if (isValid) {
+      setCJApiKey(apiKey)
+      setHasApiKey(true)
+      setApiKeyMessage({ type: 'success', text: 'API-Key erfolgreich validiert und gespeichert!' })
+    } else {
+      setApiKeyMessage({ type: 'error', text: 'Ungültiger API-Key. Bitte überprüfen Sie Ihre CJ-Zugangsdaten.' })
+    }
+    
     setIsValidatingKey(false)
   }
 
