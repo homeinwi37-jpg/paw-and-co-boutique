@@ -63,14 +63,10 @@ async function cjRequest<T>(endpoint: string, options: RequestInit = {}): Promis
     }),
   })
 
-  if (!response.ok) {
-    throw new Error(`CJ API Fehler: ${response.status}`)
-  }
-
   const data = await response.json()
   
-  if (data.code !== 200) {
-    throw new Error(data.message || 'CJ API Fehler')
+  if (!response.ok || data.code !== 200) {
+    throw new Error(data.message || `CJ API Fehler: ${data.code || response.status}`)
   }
 
   return data.data
@@ -129,15 +125,17 @@ export function extractCJProductId(url: string): string | null {
   const cleanUrl = url.trim()
   if (!cleanUrl) return null
 
+  // If it's just a numeric ID, return it
   if (/^\d+$/.test(cleanUrl)) {
     return cleanUrl
   }
 
+  // Handle various CJ URL formats including the long ID format
   const patterns = [
-    /p-(\d+)\.html/,                 // Standard product URLs
-    /product-detail\/(\d+)/,         // Product detail URLs
-    /pid=(\d+)/,                      // Query params
-    /productId=(\d+)/,                // Alternate query params
+    /p-(\d+)\.html/,                 // Standard: ...-p-1234.html
+    /product-detail\/(\d+)/,         // Detail: .../product-detail/1234
+    /pid=(\d+)/,                      // Query: ?pid=1234
+    /productId=(\d+)/,                // Query: ?productId=1234
   ]
 
   for (const pattern of patterns) {
@@ -145,9 +143,13 @@ export function extractCJProductId(url: string): string | null {
     if (match && match[1]) return match[1]
   }
 
-  // Fallback for long IDs in URLs like the one provided
-  const idMatch = cleanUrl.match(/(\d{10,})/)
-  if (idMatch) return idMatch[1]
+  // Fallback: search for any sequence of 10+ digits which is common for CJ long IDs
+  const longIdMatch = cleanUrl.match(/(\d{10,})/)
+  if (longIdMatch) return longIdMatch[1]
+
+  // Final fallback: any sequence of digits longer than 5
+  const shortIdMatch = cleanUrl.match(/(\d{5,})/)
+  if (shortIdMatch) return shortIdMatch[1]
 
   return null
 }
