@@ -31,11 +31,12 @@ export interface CJSearchResult {
 }
 
 const CJ_API_BASE = 'https://developers.cjdropshipping.com/api2.0/v1'
+const HARDCODED_CJ_API_KEY = 'CJ2566801@api@46afeca02e4040f087fd5e161e1a74b5'
 
-// Get stored API key
+// Get stored API key (with hardcoded fallback)
 export function getCJApiKey(): string | null {
-  if (typeof window === 'undefined') return null
-  return localStorage.getItem('cj_api_key')
+  if (typeof window === 'undefined') return HARDCODED_CJ_API_KEY
+  return localStorage.getItem('cj_api_key') || HARDCODED_CJ_API_KEY
 }
 
 // Save API key
@@ -51,15 +52,12 @@ export function removeCJApiKey(): void {
 // Make API request to CJ
 async function cjRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const apiKey = getCJApiKey()
-  if (!apiKey) {
-    throw new Error('CJ API Key nicht konfiguriert')
-  }
-
+  
   const response = await fetch(`${CJ_API_BASE}${endpoint}`, {
     ...options,
     cache: 'no-store',
     headers: {
-      'CJ-Access-Token': apiKey,
+      'CJ-Access-Token': apiKey || '',
       'Content-Type': 'application/json',
       ...options.headers,
     },
@@ -247,13 +245,25 @@ export async function getMockCJProducts(): Promise<CJProduct[]> {
 }
 
 // Check if API key is valid
-export async function validateCJApiKey(): Promise<boolean> {
+export async function validateCJApiKey(tempKey?: string): Promise<boolean> {
   try {
-    await cjRequest('/product/list', {
+    const key = tempKey || getCJApiKey()
+    if (!key) return false
+
+    // We use a simple list request to validate the key
+    const response = await fetch(`${CJ_API_BASE}/product/list`, {
       method: 'POST',
+      headers: {
+        'CJ-Access-Token': key,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({ pageNum: 1, pageSize: 1 }),
+      cache: 'no-store'
     })
-    return true
+
+    if (!response.ok) return false
+    const data = await response.json()
+    return data.code === 200
   } catch {
     return false
   }
