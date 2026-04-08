@@ -49,18 +49,18 @@ export function removeCJApiKey(): void {
   localStorage.removeItem('cj_api_key')
 }
 
-// Make API request to CJ
+// Make API request to CJ via internal API proxy
 async function cjRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const apiKey = getCJApiKey()
-  
-  const response = await fetch(`${CJ_API_BASE}${endpoint}`, {
-    ...options,
-    cache: 'no-store',
+  const response = await fetch('/api/import-cj', {
+    method: 'POST',
     headers: {
-      'CJ-Access-Token': apiKey || '',
       'Content-Type': 'application/json',
-      ...options.headers,
     },
+    body: JSON.stringify({
+      endpoint,
+      method: options.method || 'POST',
+      body: options.body ? JSON.parse(options.body as string) : {},
+    }),
   })
 
   if (!response.ok) {
@@ -126,22 +126,18 @@ export async function getCJProductBySku(sku: string): Promise<CJProduct | null> 
 }
 
 export function extractCJProductId(url: string): string | null {
-  // Clean URL
   const cleanUrl = url.trim()
   if (!cleanUrl) return null
 
-  // If it's just a numeric ID, return it
   if (/^\d+$/.test(cleanUrl)) {
     return cleanUrl
   }
 
-  // Handle various CJ URL formats
   const patterns = [
-    /p-(\d+)\.html/,                 // cjdropshipping.com/product/xxx-p-1234.html
-    /product-detail\/(\d+)/,         // cjdropshipping.com/product-detail/1234
-    /pid=(\d+)/,                      // query params ?pid=1234
-    /productId=(\d+)/,                // query params ?productId=1234
-    /([A-Z0-9-]{10,})/i               // Handle UUID style IDs if applicable (CJ uses numeric mostly but just in case)
+    /p-(\d+)\.html/,                 // Standard product URLs
+    /product-detail\/(\d+)/,         // Product detail URLs
+    /pid=(\d+)/,                      // Query params
+    /productId=(\d+)/,                // Alternate query params
   ]
 
   for (const pattern of patterns) {
@@ -149,9 +145,9 @@ export function extractCJProductId(url: string): string | null {
     if (match && match[1]) return match[1]
   }
 
-  // Try to find any sequence of digits longer than 5 that might be the ID
-  const fallbackMatch = cleanUrl.match(/(\d{5,})/)
-  if (fallbackMatch) return fallbackMatch[1]
+  // Fallback for long IDs in URLs like the one provided
+  const idMatch = cleanUrl.match(/(\d{10,})/)
+  if (idMatch) return idMatch[1]
 
   return null
 }
