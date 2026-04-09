@@ -1,3 +1,5 @@
+import { supabase } from './supabase'
+
 export interface Product {
   id: string
   name: string
@@ -14,223 +16,147 @@ export interface Product {
   updatedAt: string
 }
 
-export interface ProductsData {
-  products: Product[]
-  lastUpdated: string
+// Get all products from Supabase
+export async function getProductsFromStorage(): Promise<Product[]> {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching products:', error)
+    return []
+  }
+
+  return data.map(mapDbToProduct)
 }
 
-const STORAGE_KEY = 'paw_co_products'
-
-// Get products from localStorage (for admin editing)
-export function getProductsFromStorage(): Product[] {
-  if (typeof window === 'undefined') return []
-  const data = localStorage.getItem(STORAGE_KEY)
-  if (!data) return getDefaultProducts()
-  try {
-    const parsed: ProductsData = JSON.parse(data)
-    return parsed.products
-  } catch {
-    return getDefaultProducts()
+// Map database fields (snake_case) to Product interface (camelCase)
+function mapDbToProduct(dbProduct: any): Product {
+  return {
+    id: dbProduct.id,
+    name: dbProduct.name,
+    description: dbProduct.description,
+    price: Number(dbProduct.price),
+    originalPrice: dbProduct.original_price ? Number(dbProduct.original_price) : undefined,
+    images: dbProduct.images || [],
+    category: dbProduct.category,
+    specs: dbProduct.specs || {},
+    cjProductId: dbProduct.cj_product_id,
+    cjVariantId: dbProduct.cj_variant_id,
+    isActive: dbProduct.is_active,
+    createdAt: dbProduct.created_at,
+    updatedAt: dbProduct.updated_at
   }
 }
 
-// Save products to localStorage
-export function saveProductsToStorage(products: Product[]): void {
-  const data: ProductsData = {
-    products,
-    lastUpdated: new Date().toISOString()
+// Add a new product to Supabase
+export async function addProduct(product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product | null> {
+  const { data, error } = await supabase
+    .from('products')
+    .insert([{
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      original_price: product.originalPrice,
+      images: product.images,
+      category: product.category,
+      specs: product.specs,
+      cj_product_id: product.cjProductId,
+      cj_variant_id: product.cjVariantId,
+      is_active: product.isActive
+    }])
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error adding product:', error)
+    return null
   }
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
+
+  return mapDbToProduct(data)
 }
 
-// Add a new product
-export function addProduct(product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Product {
-  const products = getProductsFromStorage()
-  const newProduct: Product = {
-    ...product,
-    id: generateId(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  }
-  products.push(newProduct)
-  saveProductsToStorage(products)
-  return newProduct
-}
-
-// Update a product
-export function updateProduct(id: string, updates: Partial<Product>): Product | null {
-  const products = getProductsFromStorage()
-  const index = products.findIndex(p => p.id === id)
-  if (index === -1) return null
+// Update a product in Supabase
+export async function updateProduct(id: string, updates: Partial<Product>): Promise<Product | null> {
+  const dbUpdates: any = {}
+  if (updates.name !== undefined) dbUpdates.name = updates.name
+  if (updates.description !== undefined) dbUpdates.description = updates.description
+  if (updates.price !== undefined) dbUpdates.price = updates.price
+  if (updates.originalPrice !== undefined) dbUpdates.original_price = updates.originalPrice
+  if (updates.images !== undefined) dbUpdates.images = updates.images
+  if (updates.category !== undefined) dbUpdates.category = updates.category
+  if (updates.specs !== undefined) dbUpdates.specs = updates.specs
+  if (updates.cjProductId !== undefined) dbUpdates.cj_product_id = updates.cjProductId
+  if (updates.cjVariantId !== undefined) dbUpdates.cj_variant_id = updates.cjVariantId
+  if (updates.isActive !== undefined) dbUpdates.is_active = updates.isActive
   
-  products[index] = {
-    ...products[index],
-    ...updates,
-    updatedAt: new Date().toISOString()
+  dbUpdates.updated_at = new Date().toISOString()
+
+  const { data, error } = await supabase
+    .from('products')
+    .update(dbUpdates)
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error updating product:', error)
+    return null
   }
-  saveProductsToStorage(products)
-  return products[index]
+
+  return mapDbToProduct(data)
 }
 
-// Delete a product
-export function deleteProduct(id: string): boolean {
-  const products = getProductsFromStorage()
-  const filtered = products.filter(p => p.id !== id)
-  if (filtered.length === products.length) return false
-  saveProductsToStorage(filtered)
+// Delete a product from Supabase
+export async function deleteProduct(id: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('products')
+    .delete()
+    .eq('id', id)
+
+  if (error) {
+    console.error('Error deleting product:', error)
+    return false
+  }
+
   return true
 }
 
-// Get a single product by ID
-export function getProductById(id: string): Product | null {
-  const products = getProductsFromStorage()
-  return products.find(p => p.id === id) || null
-}
+// Get a single product by ID from Supabase
+export async function getProductById(id: string): Promise<Product | null> {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .eq('id', id)
+    .single()
 
-// Generate unique ID
-function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2)
-}
-
-// Default products for initial setup
-export function getDefaultProducts(): Product[] {
-  return [
-    {
-      id: "prod_001",
-      name: "Premium Hundebett 'Royal Comfort'",
-      description: "Luxuriöses orthopädisches Hundebett aus hochwertigem Memory-Schaum. Bezug aus samtweichem, hypoallergenem Stoff in elegantem Grau. Waschbar bei 30°C.",
-      price: 149.99,
-      originalPrice: 199.99,
-      images: [
-        "https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=800",
-        "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800"
-      ],
-      category: "Betten",
-      specs: {
-        "Material": "Memory-Schaum, Samt",
-        "Größe": "80x60x20 cm",
-        "Gewicht": "3.5 kg",
-        "Pflegehinweis": "Bezug waschbar bei 30°C"
-      },
-      isActive: true,
-      createdAt: "2024-01-15T10:00:00Z",
-      updatedAt: "2024-01-15T10:00:00Z"
-    },
-    {
-      id: "prod_002",
-      name: "Elegantes Leder-Halsband 'Milano'",
-      description: "Handgefertigtes Hundehalsband aus italienischem Vollnarbenleder. Verstellbar mit goldener Schnalle. Erhältlich in verschiedenen Größen.",
-      price: 79.99,
-      originalPrice: 99.99,
-      images: [
-        "https://images.unsplash.com/photo-1599839575338-31b11ae5c390?w=800"
-      ],
-      category: "Halsbänder",
-      specs: {
-        "Material": "Italienisches Leder",
-        "Breite": "2.5 cm",
-        "Länge": "35-45 cm (verstellbar)",
-        "Verschluss": "Goldene Metallschnalle"
-      },
-      isActive: true,
-      createdAt: "2024-01-16T10:00:00Z",
-      updatedAt: "2024-01-16T10:00:00Z"
-    },
-    {
-      id: "prod_003",
-      name: "Bio-Leckerli Set 'Naturgenuss'",
-      description: "Premium Bio-Hundesnacks aus 100% natürlichen Zutaten. Ohne Zusatzstoffe, Getreide und Zucker. Set enthält 3 verschiedene Sorten.",
-      price: 34.99,
-      images: [
-        "https://images.unsplash.com/photo-1568640347023-a616a30bc3bd?w=800"
-      ],
-      category: "Snacks",
-      specs: {
-        "Inhalt": "3x 100g Beutel",
-        "Sorten": "Huhn, Lachs, Rind",
-        "Zertifizierung": "Bio, Getreidefrei",
-        "Haltbarkeit": "12 Monate"
-      },
-      isActive: true,
-      createdAt: "2024-01-17T10:00:00Z",
-      updatedAt: "2024-01-17T10:00:00Z"
-    },
-    {
-      id: "prod_004",
-      name: "Intelligentes Spielzeug 'Brain Trainer'",
-      description: "Interaktives Futterspielzeug zur geistigen Beschäftigung. Verschiedene Schwierigkeitsstufen. Fördert die natürliche Neugier Ihres Hundes.",
-      price: 44.99,
-      originalPrice: 59.99,
-      images: [
-        "https://images.unsplash.com/photo-1535294435445-d7249524ef2e?w=800"
-      ],
-      category: "Spielzeug",
-      specs: {
-        "Material": "BPA-freier Kunststoff",
-        "Größe": "15x15x8 cm",
-        "Schwierigkeitsstufen": "3",
-        "Spülmaschinenfest": "Ja"
-      },
-      isActive: true,
-      createdAt: "2024-01-18T10:00:00Z",
-      updatedAt: "2024-01-18T10:00:00Z"
-    },
-    {
-      id: "prod_005",
-      name: "Regenmantel 'Urban Shield'",
-      description: "Wasserdichter Hundemantel mit reflektierenden Streifen für sichere Nachtspaziergänge. Atmungsaktiv und leicht anzuziehen.",
-      price: 64.99,
-      images: [
-        "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=800"
-      ],
-      category: "Bekleidung",
-      specs: {
-        "Material": "Wasserdichtes Polyester",
-        "Größen": "S, M, L, XL",
-        "Farbe": "Schwarz mit Reflektoren",
-        "Verschluss": "Klettverschluss"
-      },
-      isActive: true,
-      createdAt: "2024-01-19T10:00:00Z",
-      updatedAt: "2024-01-19T10:00:00Z"
-    },
-    {
-      id: "prod_006",
-      name: "Keramik-Napf Set 'Elegance'",
-      description: "Hochwertiges 2er-Set Keramiknäpfe mit rutschfestem Silikonboden. Spülmaschinenfest und kratzfest. Zeitloses Design.",
-      price: 54.99,
-      originalPrice: 69.99,
-      images: [
-        "https://images.unsplash.com/photo-1601758124510-52d02ddb7cbd?w=800"
-      ],
-      category: "Näpfe",
-      specs: {
-        "Material": "Hochwertige Keramik",
-        "Fassungsvermögen": "400ml + 800ml",
-        "Boden": "Rutschfestes Silikon",
-        "Spülmaschinenfest": "Ja"
-      },
-      isActive: true,
-      createdAt: "2024-01-20T10:00:00Z",
-      updatedAt: "2024-01-20T10:00:00Z"
-    }
-  ]
-}
-
-// Initialize products in localStorage if empty
-export function initializeProducts(): void {
-  if (typeof window === 'undefined') return
-  const existing = localStorage.getItem(STORAGE_KEY)
-  if (!existing) {
-    saveProductsToStorage(getDefaultProducts())
+  if (error) {
+    console.error('Error fetching product by ID:', error)
+    return null
   }
+
+  return mapDbToProduct(data)
 }
 
-// Get all categories
-export function getCategories(): string[] {
-  const products = getProductsFromStorage()
-  const categories = new Set(products.map(p => p.category))
-  return Array.from(categories)
+// Get all categories from Supabase
+export async function getCategories(): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('products')
+    .select('category')
+  
+  if (error) {
+    console.error('Error fetching categories:', error)
+    return []
+  }
+
+  const categories = new Set(data.map(p => p.category))
+  return Array.from(categories).filter(Boolean) as string[]
+}
+
+// Initialize products - no longer needed for Supabase as data is persistent
+export function initializeProducts(): void {
+  // Supabase is persistent, no initialization needed like LocalStorage
 }
 
 // Export products as JSON string (for GitHub upload)

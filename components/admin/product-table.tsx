@@ -73,14 +73,14 @@ export function ProductTable({ products, onEdit, onRefresh }: ProductTableProps)
     return matchesSearch && matchesCategory && matchesStatus
   })
 
-  const handleToggleActive = (product: Product) => {
-    updateProduct(product.id, { isActive: !product.isActive })
+  const handleToggleActive = async (product: Product) => {
+    await updateProduct(product.id, { isActive: !product.isActive })
     onRefresh()
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (deleteId) {
-      deleteProduct(deleteId)
+      await deleteProduct(deleteId)
       setDeleteId(null)
       onRefresh()
     }

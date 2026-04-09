@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { Cormorant_Garamond, Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { Toaster } from 'sonner'
+import { CookieConsent } from '@/components/cookie-consent'
 import './globals.css'
 
 const cormorant = Cormorant_Garamond({ 
@@ -17,10 +19,18 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'Paw & Co. Boutique | Quiet Luxury for Pets',
-  description: 'Exklusiver Premium-Tierbedarf. Designed in Germany. Handgefertigte Qualitat fur Ihren vierbeinigen Liebling.',
+  title: 'Paw & Co. Boutique | Exklusiver Tierbedarf & Luxus Hundebetten',
+  description: 'Entdecken Sie exklusiven Premium-Tierbedarf bei Paw & Co. Boutique. Handgefertigte Luxus Hundebetten, edle Lederhalsbänder und nachhaltiges Zubehör. Designed in Germany.',
   generator: 'v0.app',
-  keywords: ['Pet boutique', 'Luxury pet products', 'German pet store', 'Premium Tierbedarf', 'Hundebetten', 'Katzenzubehor'],
+  keywords: [
+    'Tierbedarf Luxus', 
+    'Exklusive Hundebetten', 
+    'Lederhalsbänder Hund', 
+    'Premium Katzenzubehör', 
+    'Hundezubehör Deutschland', 
+    'Paw & Co Boutique',
+    'Nachhaltiges Tierzubehör'
+  ],
   icons: {
     icon: [
       {
@@ -49,6 +59,8 @@ export default function RootLayout({
     <html lang="de" className={`${cormorant.variable} ${inter.variable}`}>
       <body className="font-mono antialiased">
         {children}
+        <CookieConsent />
+        <Toaster position="top-center" />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

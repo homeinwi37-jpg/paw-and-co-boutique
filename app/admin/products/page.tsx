@@ -22,28 +22,32 @@ function AdminProductsContent() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [isCreating, setIsCreating] = useState(false)
 
-  const loadProducts = () => {
-    initializeProducts()
-    const loadedProducts = getProductsFromStorage()
+  const loadProducts = async () => {
+    setIsLoading(true)
+    const loadedProducts = await getProductsFromStorage()
     setProducts(loadedProducts)
     setIsLoading(false)
   }
 
   useEffect(() => {
-    loadProducts()
+    const init = async () => {
+      await loadProducts()
 
-    // Check URL params for edit or new
-    const editId = searchParams.get('edit')
-    const action = searchParams.get('action')
+      // Check URL params for edit or new
+      const editId = searchParams.get('edit')
+      const action = searchParams.get('action')
 
-    if (editId) {
-      const product = getProductById(editId)
-      if (product) {
-        setEditingProduct(product)
+      if (editId) {
+        const product = await getProductById(editId)
+        if (product) {
+          setEditingProduct(product)
+        }
+      } else if (action === 'new') {
+        setIsCreating(true)
       }
-    } else if (action === 'new') {
-      setIsCreating(true)
     }
+    
+    init()
   }, [searchParams])
 
   const handleEdit = (product: Product) => {

@@ -31,12 +31,11 @@ export interface CJSearchResult {
 }
 
 const CJ_API_BASE = 'https://developers.cjdropshipping.com/api2.0/v1'
-const HARDCODED_CJ_API_KEY = 'CJ2566801@api@46afeca02e4040f087fd5e161e1a74b5'
 
-// Get stored API key (with hardcoded fallback)
+// Get stored API key (with environment variable fallback)
 export function getCJApiKey(): string | null {
-  if (typeof window === 'undefined') return HARDCODED_CJ_API_KEY
-  return localStorage.getItem('cj_api_key') || HARDCODED_CJ_API_KEY
+  if (typeof window === 'undefined') return process.env.CJ_API_KEY || null
+  return localStorage.getItem('cj_api_key') || process.env.NEXT_PUBLIC_CJ_API_KEY || null
 }
 
 // Save API key
@@ -154,11 +153,45 @@ export function extractCJProductId(url: string): string | null {
   return null
 }
 
+// Pricing Configuration
+const USD_TO_EUR_RATE = 0.93 // Fixed exchange rate (USD -> EUR)
+const MARKUP_FACTOR = 2.5 // 2.5x profit margin
+const GERMAN_VAT_RATE = 0.19 // 19% MwSt
+
+/**
+ * Calculates the final retail price including Markup and VAT
+ * Formula: (SourcePrice_USD * ExchangeRate) * Markup * (1 + VAT)
+ */
+export function calculateRetailPrice(sourcePriceUsd: number): number {
+  const priceInEur = sourcePriceUsd * USD_TO_EUR_RATE
+  const priceWithMarkup = priceInEur * MARKUP_FACTOR
+  const finalPriceWithVat = priceWithMarkup * (1 + GERMAN_VAT_RATE)
+  
+  // Round to 2 decimal places
+  return Math.ceil(finalPriceWithVat * 100) / 100
+}
+
+/**
+ * Formats the price according to German price display laws (PAngV)
+ * Example: 99,99 € inkl. MwSt.
+ */
+export function formatPriceGerman(price: number): string {
+  const formatted = new Intl.NumberFormat('de-DE', {
+    style: 'currency',
+    currency: 'EUR',
+  }).format(price)
+  
+  return `${formatted} inkl. MwSt.`
+}
+
 // Convert CJ product to our product format
 export function convertCJToProduct(cj: CJProduct, germanName?: string): Omit<import('./products').Product, 'id' | 'createdAt' | 'updatedAt'> {
-  // Calculate retail price (markup of ~2.5x)
-  const sellPrice = cj.sellPrice || cj.sourcePrice || 10
-  const retailPrice = Math.ceil(sellPrice * 2.5 * 100) / 100
+  const sourcePrice = cj.sellPrice || cj.sourcePrice || 10
+  
+  // Calculate final retail price with VAT and Markup
+  const retailPrice = calculateRetailPrice(sourcePrice)
+  
+  // Original price for "Strike-through" effect (30% higher than retail)
   const originalPrice = Math.ceil(retailPrice * 1.3 * 100) / 100
 
   return {

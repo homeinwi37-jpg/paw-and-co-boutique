@@ -27,15 +27,18 @@ export function ProductCard({ id, name, price, originalPrice, category, images, 
   const formattedPrice = new Intl.NumberFormat('de-DE', {
     style: 'currency',
     currency: 'EUR'
-  }).format(price)
+  }).format(price) + " inkl. MwSt."
 
   const formattedOriginalPrice = originalPrice 
-    ? new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(originalPrice)
+    ? new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(originalPrice) + " inkl. MwSt."
     : null
+
+  // Create SEO friendly slug from name
+  const slug = name.toLowerCase().replace(/ /g, '-')
 
   return (
     <Link 
-      href={`/produkt/${id}`}
+      href={`/produkte/${slug}`}
       className="group block"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}

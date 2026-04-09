@@ -5,6 +5,8 @@ import Link from "next/link"
 import { useState } from "react"
 import { ArrowLeft, Check, Minus, Plus, ShoppingBag, Truck } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { PayPalButton } from "@/components/paypal-button"
+import { TrustSection } from "@/components/trust-section"
 
 interface Product {
   id: string
@@ -137,6 +139,21 @@ export function ProductDetail({ product }: ProductDetailProps) {
               <ShoppingBag className="h-4 w-4 mr-3" />
               In den Warenkorb
             </Button>
+
+            {/* PayPal Checkout Integration */}
+            <PayPalButton 
+              amount={product.price * quantity}
+              productName={product.name}
+              items={[{
+                id: product.id,
+                name: product.name,
+                quantity: quantity,
+                price: product.price
+              }]}
+            />
+
+            {/* Trust Section */}
+            <TrustSection />
 
             {/* Shipping Info */}
             <div className="flex items-center gap-3 text-sm text-muted-foreground mb-10">
