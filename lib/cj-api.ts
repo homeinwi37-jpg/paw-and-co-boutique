@@ -97,12 +97,14 @@ export async function searchCJProducts(
 // Get product details by PID
 export async function getCJProductById(pid: string): Promise<CJProduct | null> {
   try {
-    const result = await cjRequest<any>('/product/query', {
+    // Ensure pid is treated as a string to avoid precision issues
+    const result = await cjRequest<any>('/product/details', {
       method: 'POST',
-      body: JSON.stringify({ pid }),
+      body: JSON.stringify({ pid: pid.toString() }),
     })
     return result || null
-  } catch {
+  } catch (error) {
+    console.error('Error fetching product by ID:', error)
     return null
   }
 }
@@ -124,31 +126,31 @@ export function extractCJProductId(url: string): string | null {
   const cleanUrl = url.trim()
   if (!cleanUrl) return null
 
-  // If it's just a numeric ID, return it
+  // If it's just a numeric ID, return it as a string
   if (/^\d+$/.test(cleanUrl)) {
     return cleanUrl
   }
 
-  // Handle various CJ URL formats including the long ID format
+  // Handle various CJ URL formats including the long ID format (V2)
   const patterns = [
     /p-(\d+)\.html/,                 // Standard: ...-p-1234.html
     /product-detail\/(\d+)/,         // Detail: .../product-detail/1234
     /pid=(\d+)/,                      // Query: ?pid=1234
-    /productId=(\d+)/,                // Query: ?productId=1234
+    /productId=(\d+)/,                // Alternate query
   ]
 
   for (const pattern of patterns) {
     const match = cleanUrl.match(pattern)
-    if (match && match[1]) return match[1]
+    if (match && match[1]) return match[1].toString()
   }
 
-  // Fallback: search for any sequence of 10+ digits which is common for CJ long IDs
-  const longIdMatch = cleanUrl.match(/(\d{10,})/)
-  if (longIdMatch) return longIdMatch[1]
+  // Fallback: search for any sequence of 15+ digits (CJ V2 IDs are very long)
+  const longIdMatch = cleanUrl.match(/(\d{15,})/)
+  if (longIdMatch) return longIdMatch[1].toString()
 
-  // Final fallback: any sequence of digits longer than 5
+  // Last fallback: any sequence of digits longer than 5
   const shortIdMatch = cleanUrl.match(/(\d{5,})/)
-  if (shortIdMatch) return shortIdMatch[1]
+  if (shortIdMatch) return shortIdMatch[1].toString()
 
   return null
 }
@@ -278,24 +280,25 @@ export async function getMockCJProducts(): Promise<CJProduct[]> {
 // Check if API key is valid
 export async function validateCJApiKey(tempKey?: string): Promise<boolean> {
   try {
-    const key = tempKey || getCJApiKey()
-    if (!key) return false
-
-    // We use a simple list request to validate the key
-    const response = await fetch(`${CJ_API_BASE}/product/list`, {
+    // Route validation through proxy to avoid CORS and use correct V2 endpoint
+    const response = await fetch('/api/import-cj', {
       method: 'POST',
       headers: {
-        'CJ-Access-Token': key,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ pageNum: 1, pageSize: 1 }),
-      cache: 'no-store'
+      body: JSON.stringify({
+        endpoint: '/product/list',
+        method: 'POST',
+        body: { pageNum: 1, pageSize: 1 },
+        token: tempKey // Pass temp key if validating a new one in settings
+      }),
     })
 
     if (!response.ok) return false
     const data = await response.json()
     return data.code === 200
-  } catch {
+  } catch (error) {
+    console.error('API Validation error:', error)
     return false
   }
 }
